@@ -1,0 +1,997 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   Quick Replies — styles.css
+   Premium dark Mac desktop web app
+   ───────────────────────────────────────────────────────────────────────────── */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  /* Accent — soft blue */
+  --accent:           #5897fd;
+  --accent-dim:       rgba(88, 151, 253, 0.16);
+  --accent-border:    rgba(88, 151, 253, 0.30);
+  --accent-hover:     rgba(88, 151, 253, 0.26);
+  --section-active:   rgba(88, 151, 253, 0.13);
+
+  /* Copied / success — blue accent family (no green) */
+  --success:          #5897fd;
+  --success-dim:      rgba(88, 151, 253, 0.13);
+  --success-border:   rgba(88, 151, 253, 0.40);
+
+  /* Danger */
+  --danger:           #ff453a;
+  --danger-dim:       rgba(255, 69, 58, 0.11);
+
+  /* Text */
+  --text-1:           rgba(255, 255, 255, 0.93);
+  --text-2:           rgba(255, 255, 255, 0.54);
+  --text-3:           rgba(255, 255, 255, 0.28);
+
+  /* Borders */
+  --border-subtle:    rgba(255, 255, 255, 0.065);
+  --border-mid:       rgba(255, 255, 255, 0.105);
+  --border-focus:     rgba(88, 151, 253, 0.52);
+
+  /* Cards / surfaces */
+  --bg-card:          rgba(255, 255, 255, 0.055);
+  --bg-card-hover:    rgba(255, 255, 255, 0.09);
+  --bg-input:         rgba(255, 255, 255, 0.07);
+  --bg-modal:         rgba(18, 21, 32, 0.97);
+
+  /* Layout */
+  --sidebar-w:        228px;
+
+  /* Radii */
+  --r-xs:  6px;
+  --r-sm:  9px;
+  --r-md:  13px;
+  --r-lg:  16px;
+
+  /* Transitions */
+  --t:    0.16s ease;
+  --t-md: 0.24s ease;
+}
+
+/* ─── Base ─────────────────────────────────────────────────────────────────── */
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+  /* Rich dark graphite + smoky blue gradient — not flat black */
+  background:
+    linear-gradient(155deg, #141a26 0%, #0f1219 45%, #0c0e17 100%);
+  color: var(--text-1);
+  font-size: 13.5px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* Ambient glow — upper-left cool blue pool */
+body::before {
+  content: '';
+  position: fixed;
+  top: -18%;
+  left: -10%;
+  width: 62%;
+  height: 70%;
+  background: radial-gradient(ellipse at center, rgba(50, 75, 140, 0.2) 0%, transparent 68%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Ambient glow — lower-right subtle warmth */
+body::after {
+  content: '';
+  position: fixed;
+  bottom: -14%;
+  right: -8%;
+  width: 55%;
+  height: 60%;
+  background: radial-gradient(ellipse at center, rgba(30, 45, 100, 0.14) 0%, transparent 65%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* ─── App Shell ────────────────────────────────────────────────────────────── */
+
+.app {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+/* ─── Sidebar ──────────────────────────────────────────────────────────────── */
+
+.sidebar {
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  /* Slightly darker glass panel */
+  background: rgba(10, 12, 20, 0.72);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-right: 1px solid var(--border-subtle);
+  overflow: hidden;
+}
+
+.sidebar-top {
+  padding: 18px 12px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.sidebar-branding {
+  margin-bottom: 12px;
+}
+
+.app-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text-1);
+  letter-spacing: -0.3px;
+}
+
+/* Add Section Button */
+.btn-add-section {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 7px 10px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--r-sm);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--t), border-color var(--t), box-shadow var(--t);
+  text-align: left;
+}
+
+.btn-add-section:hover {
+  background: var(--accent-hover);
+  border-color: rgba(88, 151, 253, 0.48);
+  box-shadow: 0 0 16px rgba(88, 151, 253, 0.1);
+}
+
+.btn-add-section:active {
+  opacity: 0.78;
+}
+
+/* Section List */
+.section-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0 12px;
+}
+
+.section-list::-webkit-scrollbar {
+  width: 4px;
+}
+.section-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.section-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+/* Section group labels */
+.section-group-label {
+  padding: 10px 14px 5px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: var(--text-3);
+}
+
+.section-divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 8px 10px;
+}
+
+/* Section Row */
+.section-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 6px;
+  margin: 1px 6px;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: background var(--t), box-shadow var(--t);
+  min-height: 34px;
+}
+
+.section-item:hover {
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.section-item:hover .section-actions {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* Active section: blue accent bar on left via inset box-shadow */
+.section-item.active {
+  background: var(--section-active);
+  box-shadow: inset 2.5px 0 0 var(--accent);
+}
+
+.section-item-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 4px 7px 6px;
+  min-width: 0;
+  gap: 6px;
+}
+
+.section-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-1);
+  transition: color var(--t);
+}
+
+.section-item.active .section-name {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.section-count {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.section-actions {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--t);
+  flex-shrink: 0;
+}
+
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--text-3);
+  cursor: pointer;
+  border-radius: var(--r-xs);
+  transition: color var(--t), background var(--t);
+  flex-shrink: 0;
+}
+
+.icon-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-2);
+}
+
+.icon-btn.delete-btn:hover {
+  background: var(--danger-dim);
+  color: var(--danger);
+}
+
+/* Pin button — accent color when section is currently pinned */
+.icon-btn.pin-btn.is-pinned {
+  color: var(--accent);
+}
+.icon-btn.pin-btn.is-pinned:hover {
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+/* ─── Content Area ─────────────────────────────────────────────────────────── */
+
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Content Header */
+.content-header {
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.content-header.hidden {
+  display: none;
+}
+
+.content-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 11px;
+}
+
+.content-section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-1);
+  letter-spacing: -0.3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* Add Reply Button */
+.btn-add-text {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 13px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--r-sm);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--t), border-color var(--t), box-shadow var(--t);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.btn-add-text:hover {
+  background: var(--accent-hover);
+  border-color: rgba(88, 151, 253, 0.48);
+  box-shadow: 0 0 14px rgba(88, 151, 253, 0.12);
+}
+
+.btn-add-text:active {
+  opacity: 0.78;
+}
+
+/* Shared icon span inside buttons */
+.btn-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Search Bar */
+.search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  color: var(--text-3);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.search-input {
+  width: 100%;
+  padding: 7px 32px 7px 34px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  color: var(--text-1);
+  font-size: 13px;
+  outline: none;
+  transition: border-color var(--t), background var(--t), box-shadow var(--t);
+  user-select: text;
+}
+
+.search-input::placeholder {
+  color: var(--text-3);
+}
+
+.search-input:focus {
+  border-color: var(--border-focus);
+  background: rgba(255, 255, 255, 0.088);
+  box-shadow: 0 0 0 3px rgba(88, 151, 253, 0.08);
+}
+
+.search-clear {
+  position: absolute;
+  right: 8px;
+  background: rgba(255, 255, 255, 0.11);
+  border: none;
+  color: var(--text-2);
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--t), color var(--t);
+}
+
+.search-clear:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--text-1);
+}
+
+/* ─── Texts Container ──────────────────────────────────────────────────────── */
+
+.texts-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.texts-container::-webkit-scrollbar {
+  width: 5px;
+}
+.texts-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+.texts-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+/* ─── Card Entry Animation ─────────────────────────────────────────────────── */
+
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ─── Shimmer on Copy ──────────────────────────────────────────────────────── */
+
+@keyframes card-shimmer {
+  0%   { transform: translateX(-115%); }
+  100% { transform: translateX(115%); }
+}
+
+/* ─── Reply Cards ──────────────────────────────────────────────────────────── */
+
+.reply-card {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  /* animate entry */
+  animation: card-enter 0.22s ease both;
+  transition:
+    background var(--t),
+    border-color var(--t),
+    box-shadow var(--t-md),
+    transform var(--t-md);
+  cursor: default;
+}
+
+/* Lift + glow on hover — whole card lights up */
+.reply-card:hover {
+  background: var(--bg-card-hover);
+  border-color: rgba(255, 255, 255, 0.13);
+  box-shadow:
+    0 0 0 1px rgba(88, 151, 253, 0.09),
+    0 8px 28px rgba(0, 0, 0, 0.3),
+    0 2px 8px rgba(0, 0, 0, 0.18);
+  transform: translateY(-2px);
+}
+
+.reply-card:hover .card-actions {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* Copied success state — overrides hover */
+.reply-card.copied {
+  border-color: var(--success-border);
+  background: var(--success-dim);
+  box-shadow:
+    0 0 0 1px rgba(88, 151, 253, 0.18),
+    0 6px 22px rgba(88, 151, 253, 0.12);
+  transform: translateY(-1px);
+}
+
+/* Shimmer sweep across copied card */
+.reply-card.copied::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent          0%,
+    rgba(88, 151, 253, 0.16) 40%,
+    rgba(88, 151, 253, 0.24) 50%,
+    rgba(88, 151, 253, 0.16) 60%,
+    transparent          100%
+  );
+  animation: card-shimmer 0.65s ease-out forwards;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Section label (search mode) */
+.card-section-label {
+  padding: 9px 13px 0;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Card body */
+.card-body {
+  padding: 11px 13px 8px;
+}
+
+.card-text {
+  font-size: 13.5px;
+  color: var(--text-1);
+  line-height: 1.62;
+  white-space: pre-wrap;
+  word-break: break-word;
+  user-select: text;
+}
+
+/* Card footer */
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 8px 9px 13px;
+  gap: 8px;
+}
+
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--t);
+}
+
+.card-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: transparent;
+  border: none;
+  border-radius: var(--r-xs);
+  color: var(--text-3);
+  font-size: 11.5px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: color var(--t), background var(--t);
+  white-space: nowrap;
+}
+
+.card-action-btn:hover {
+  color: var(--text-2);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.card-action-btn.delete-text-btn:hover {
+  color: var(--danger);
+  background: var(--danger-dim);
+}
+
+/* ─── Copy Button — pill shape, more premium ────────────────────────────────── */
+
+.copy-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;       /* pill */
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background var(--t),
+    border-color var(--t),
+    color var(--t),
+    transform var(--t),
+    box-shadow var(--t);
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: 0.1px;
+  position: relative;
+  z-index: 2;   /* sit above shimmer pseudo-element */
+}
+
+.copy-btn:hover {
+  background: var(--accent-dim);
+  border-color: var(--accent-border);
+  color: var(--accent);
+  box-shadow: 0 0 14px rgba(88, 151, 253, 0.14);
+}
+
+.copy-btn:active {
+  transform: scale(0.95);
+}
+
+.copy-btn.copied {
+  background: var(--success-dim);
+  border-color: var(--success-border);
+  color: var(--success);
+  box-shadow: 0 0 14px rgba(88, 151, 253, 0.18);
+}
+
+.copy-icon,
+.copy-label {
+  display: flex;
+  align-items: center;
+}
+
+/* ─── Empty State ──────────────────────────────────────────────────────────── */
+
+.empty-state {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 32px;
+}
+
+.empty-state.hidden {
+  display: none;
+}
+
+.empty-state-inner {
+  text-align: center;
+  max-width: 270px;
+}
+
+.empty-icon {
+  color: var(--text-3);
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: center;
+}
+
+.empty-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-2);
+  margin-bottom: 7px;
+  letter-spacing: -0.2px;
+}
+
+.empty-sub {
+  font-size: 13px;
+  color: var(--text-3);
+  line-height: 1.55;
+}
+
+/* ─── Modal ────────────────────────────────────────────────────────────────── */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--t-md);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.modal-overlay.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.modal {
+  background: var(--bg-modal);
+  border: 1px solid var(--border-mid);
+  border-radius: var(--r-lg);
+  width: 430px;
+  max-width: min(430px, 90vw);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.055),
+    0 24px 56px rgba(0, 0, 0, 0.7),
+    0 8px 20px rgba(0, 0, 0, 0.4);
+  transform: scale(0.94) translateY(-12px);
+  transition: transform var(--t-md) cubic-bezier(0.34, 1.2, 0.64, 1);
+  overflow: hidden;
+}
+
+.modal-overlay.visible .modal {
+  transform: scale(1) translateY(0);
+}
+
+.modal-header {
+  padding: 20px 22px 0;
+}
+
+.modal-header h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-1);
+  letter-spacing: -0.2px;
+}
+
+.modal-body {
+  padding: 14px 22px;
+}
+
+.modal-input {
+  width: 100%;
+  padding: 9px 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-mid);
+  border-radius: var(--r-sm);
+  color: var(--text-1);
+  font-size: 13.5px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color var(--t), box-shadow var(--t);
+  user-select: text;
+}
+
+.modal-textarea {
+  width: 100%;
+  min-height: 136px;
+  padding: 9px 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-mid);
+  border-radius: var(--r-sm);
+  color: var(--text-1);
+  font-size: 13.5px;
+  line-height: 1.62;
+  font-family: inherit;
+  outline: none;
+  resize: vertical;
+  transition: border-color var(--t), box-shadow var(--t);
+  user-select: text;
+}
+
+.modal-input:focus,
+.modal-textarea:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(88, 151, 253, 0.1);
+}
+
+.modal-input::placeholder,
+.modal-textarea::placeholder {
+  color: var(--text-3);
+}
+
+.modal-hint {
+  margin-top: 7px;
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0 22px 20px;
+}
+
+.modal-btn {
+  padding: 7px 20px;
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--t);
+  font-family: inherit;
+}
+
+.modal-btn.secondary {
+  background: transparent;
+  border: 1px solid var(--border-mid);
+  color: var(--text-2);
+}
+
+.modal-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--text-1);
+}
+
+.modal-btn.primary {
+  background: var(--accent);
+  border: 1px solid transparent;
+  color: #fff;
+}
+
+.modal-btn.primary:hover {
+  background: #6aa6fe;
+  box-shadow: 0 0 16px rgba(88, 151, 253, 0.3);
+}
+
+.modal-btn.primary:active,
+.modal-btn.secondary:active {
+  opacity: 0.75;
+}
+
+/* ─── Toast Notification ───────────────────────────────────────────────────── */
+
+.toast {
+  position: fixed;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: rgba(20, 24, 36, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 22px;
+  padding: 7px 16px 7px 11px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-1);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 500;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 10px 28px rgba(0, 0, 0, 0.45);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  white-space: nowrap;
+}
+
+.toast.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.toast-icon {
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* ─── Card Footer Right (translate + copy grouped) ────────────────────────── */
+
+.card-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* ─── Translate Button — same pill family as Copy ──────────────────────────── */
+
+.translate-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background var(--t),
+    border-color var(--t),
+    color var(--t),
+    opacity var(--t);
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: 0.1px;
+  position: relative;
+  z-index: 2;
+  font-family: inherit;
+}
+
+.translate-btn:hover {
+  background: rgba(255, 255, 255, 0.095);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: var(--text-2);
+}
+
+.translate-btn:active {
+  transform: scale(0.95);
+}
+
+/* Active state — showing translation */
+.translate-btn.is-translated {
+  background: var(--accent-dim);
+  border-color: var(--accent-border);
+  color: var(--accent);
+}
+
+.translate-btn.is-translated:hover {
+  background: var(--accent-hover);
+  border-color: rgba(88, 151, 253, 0.48);
+  box-shadow: 0 0 14px rgba(88, 151, 253, 0.14);
+}
+
+/* Stale — translation exists but content changed, needs refresh */
+.translate-btn.is-stale {
+  border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.13);
+}
+
+/* Loading state */
+.translate-btn.translating {
+  opacity: 0.5;
+  cursor: default;
+  pointer-events: none;
+}
+
+.translate-icon,
+.translate-label {
+  display: flex;
+  align-items: center;
+}
+
+/* ─── Utility ──────────────────────────────────────────────────────────────── */
+
+.hidden {
+  display: none !important;
+}
+
+/* Thin global scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}

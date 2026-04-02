@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quick Replies</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ── Sidebar ──────────────────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-top">
+      <div class="sidebar-branding">
+        <span class="app-title">Quick Replies</span>
+      </div>
+      <button id="btnAddSection" class="btn-add-section" title="Add new section">
+        <span class="btn-icon" id="iconAddSection"></span>
+        Add Section
+      </button>
+    </div>
+    <div class="section-list" id="sectionList"></div>
+  </aside>
+
+  <!-- ── Main Content ──────────────────────────────────────────────────── -->
+  <main class="content">
+
+    <div class="content-header hidden" id="contentHeader">
+      <div class="content-title-row">
+        <span class="content-section-title" id="sectionTitle"></span>
+        <button id="btnAddText" class="btn-add-text" title="Add quick reply">
+          <span class="btn-icon" id="iconAddText"></span>
+          Add Reply
+        </button>
+      </div>
+      <div class="search-wrapper">
+        <span class="search-icon" id="searchIconEl"></span>
+        <input
+          id="searchInput"
+          class="search-input"
+          type="text"
+          placeholder="Search replies…"
+          autocomplete="off"
+          spellcheck="false"
+        >
+        <button class="search-clear hidden" id="searchClear" title="Clear search">×</button>
+      </div>
+    </div>
+
+    <div class="texts-container" id="textsContainer"></div>
+
+    <div class="empty-state hidden" id="emptyState">
+      <div class="empty-state-inner">
+        <div class="empty-icon" id="emptyIcon"></div>
+        <p class="empty-title" id="emptyTitle"></p>
+        <p class="empty-sub" id="emptySub"></p>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ── Modal ─────────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle">Add Section</h3>
+    </div>
+    <div class="modal-body">
+      <div id="modalInputArea"></div>
+    </div>
+    <div class="modal-footer">
+      <button id="modalCancel" class="modal-btn secondary">Cancel</button>
+      <button id="modalSave" class="modal-btn primary">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Toast ──────────────────────────────────────────────────────────── -->
+<div id="toast" class="toast">
+  <span class="toast-icon" id="toastIcon"></span>
+  <span id="toastMsg">Copied to clipboard</span>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

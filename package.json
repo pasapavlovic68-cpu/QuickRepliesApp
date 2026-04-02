@@ -1,0 +1,13 @@
+{
+  "name": "quick-replies-app",
+  "version": "1.0.0",
+  "description": "Quick Replies App with server-side OpenAI translation",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "openai": "^4.47.1"
+  }
+}

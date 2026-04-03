@@ -541,7 +541,6 @@ function renderContent() {
           `;
         return `
           <div class="multi-part-block" data-part-id="${part.id}">
-            ${part.label ? `<span class="part-label">${escHtml(part.label)}</span>` : ''}
             <div class="part-content-row">
               <p class="part-content">${escHtml(visibleContent)}</p>
               ${buttonsHtml}
@@ -572,7 +571,7 @@ function renderContent() {
               <span class="translate-icon">${icon.translate()}</span>
               <span class="translate-label">${translateLabel}</span>
             </button>
-            <button class="copy-btn" data-id="${text.id}">
+            <button class="part-copy-btn copy-btn" data-part-id="${parts[parts.length - 1].id}">
               <span class="copy-icon">${icon.copy()}</span>
               <span class="copy-label">Copy</span>
             </button>
@@ -581,7 +580,6 @@ function renderContent() {
       `;
 
       card.querySelector('.translate-btn').addEventListener('click',       () => handleTranslate(text.id));
-      card.querySelector('.copy-btn[data-id]').addEventListener('click',   () => handleCopy(text.id));
       card.querySelector('.edit-text-btn').addEventListener('click',       e => { e.stopPropagation(); promptEditMultiText(text.id); });
       card.querySelector('.duplicate-text-btn').addEventListener('click',  e => { e.stopPropagation(); duplicateText(text.id); });
       card.querySelector('.delete-text-btn').addEventListener('click',     e => { e.stopPropagation(); promptDeleteText(text.id); });
@@ -905,11 +903,11 @@ async function handlePartCopy(textId, partId) {
     }, 1600);
   }
 
-  // Shimmer on the outer card
-  const card = document.querySelector(`.reply-card[data-id="${textId}"]`);
-  if (card) {
-    card.classList.add('copied');
-    setTimeout(() => card.classList.remove('copied'), 1300);
+  // Shimmer only on the specific part block that was copied
+  const partBlock = document.querySelector(`.multi-part-block[data-part-id="${partId}"]`);
+  if (partBlock) {
+    partBlock.classList.add('copied');
+    setTimeout(() => partBlock.classList.remove('copied'), 1300);
   }
 
   showToast('Copied to clipboard');

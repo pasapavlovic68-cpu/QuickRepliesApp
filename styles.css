@@ -1135,18 +1135,44 @@ button {
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding: 0 10px 2px;
+  padding: 0 0 2px;
 }
 
 .multi-part-block {
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  padding: 10px 4px 10px;
+  padding: 10px 14px;
   border-bottom: 1px solid var(--border-subtle);
+  transition: background var(--t), box-shadow var(--t);
 }
 
 .multi-part-block:last-child {
   border-bottom: none;
+}
+
+.multi-part-block.copied {
+  background: var(--success-dim);
+  box-shadow: inset 0 0 0 1px var(--success-border), 0 0 16px rgba(88, 151, 253, 0.09);
+  border-radius: var(--r-sm);
+}
+
+.multi-part-block.copied::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent              0%,
+    rgba(88, 151, 253, 0.16) 40%,
+    rgba(88, 151, 253, 0.24) 50%,
+    rgba(88, 151, 253, 0.16) 60%,
+    transparent              100%
+  );
+  animation: card-shimmer 0.65s ease-out forwards;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .multi-card-footer {

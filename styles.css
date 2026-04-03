@@ -987,6 +987,221 @@ button {
   flex-shrink: 0;
 }
 
+/* ─── Type Picker Modal ────────────────────────────────────────────────────── */
+
+.type-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.type-picker-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-mid);
+  border-radius: var(--r-sm);
+  color: var(--text-1);
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--t), border-color var(--t), box-shadow var(--t);
+  font-family: inherit;
+}
+
+.type-picker-btn:hover {
+  background: var(--accent-dim);
+  border-color: var(--accent-border);
+  box-shadow: 0 0 14px rgba(88, 151, 253, 0.1);
+}
+
+.type-picker-btn:active { opacity: 0.8; }
+
+.type-picker-icon {
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+
+.type-picker-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.type-picker-text strong {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+.type-picker-text span {
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+
+/* ─── Multi-part Modal Form ─────────────────────────────────────────────────── */
+
+.multi-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.multi-modal-part-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 10px 0;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.multi-modal-part-row:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+.multi-modal-part-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+
+.multi-modal-remove-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: transparent;
+  border: none;
+  color: var(--text-3);
+  cursor: pointer;
+  border-radius: var(--r-xs);
+  transition: color var(--t), background var(--t);
+  flex-shrink: 0;
+}
+
+.multi-modal-remove-btn:hover {
+  color: var(--danger);
+  background: var(--danger-dim);
+}
+
+.multi-modal-add-part-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 10px;
+  padding: 6px 10px;
+  background: transparent;
+  border: 1px dashed var(--border-mid);
+  border-radius: var(--r-sm);
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color var(--t), border-color var(--t), background var(--t);
+  font-family: inherit;
+  width: 100%;
+  justify-content: center;
+}
+
+.multi-modal-add-part-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent-border);
+  background: var(--accent-dim);
+}
+
+/* ─── Multi-part Card ──────────────────────────────────────────────────────── */
+
+.multi-card-body {
+  padding-bottom: 6px;
+}
+
+.multi-card-title {
+  padding: 11px 14px 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.55px;
+  color: var(--text-3);
+}
+
+.multi-parts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0 10px 2px;
+}
+
+.multi-part-block {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 4px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.multi-part-block:last-child {
+  border-bottom: none;
+}
+
+.multi-card-footer {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 8px;
+}
+
+.part-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.55px;
+  color: var(--accent);
+  margin-bottom: 5px;
+  display: block;
+}
+
+.part-content-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.part-content {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--text-1);
+  line-height: 1.62;
+  white-space: pre-wrap;
+  word-break: break-word;
+  user-select: text;
+}
+
+.part-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* part-copy-btn inherits all .copy-btn pill styles — no overrides needed */
+
+/* ─── Larger modal for multi-part (more content) ───────────────────────────── */
+
+.modal:has(.multi-modal-form) {
+  width: 520px;
+  max-width: min(520px, 92vw);
+}
+
+.modal:has(.multi-modal-form) .modal-body {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
 /* ─── Utility ──────────────────────────────────────────────────────────────── */
 
 .hidden { display: none !important; }

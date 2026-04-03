@@ -34,13 +34,24 @@ function migrateSection(s) {
 }
 
 function migrateText(t) {
-  return {
+  const base = {
     ...t,
+    type:                t.type                ?? 'single',
     usageCount:          t.usageCount          ?? 0,
     translatedText:      t.translatedText      ?? null,
     isShowingTranslated: t.isShowingTranslated  ?? false,
     translationStale:    t.translationStale     ?? false,
   };
+  if (base.type === 'multi') {
+    base.title = base.title ?? '';
+    base.parts = (base.parts || []).map(p => ({
+      id:                p.id      ?? uid(),
+      label:             p.label   ?? '',
+      content:           p.content ?? '',
+      translatedContent: p.translatedContent ?? null,
+    }));
+  }
+  return base;
 }
 
 function load() {
@@ -361,7 +372,14 @@ function renderSidebar() {
   const isVisible = s => {
     if (!q) return true;
     if (s.name.toLowerCase().includes(q)) return true;
-    return state.texts.some(t => t.sectionId === s.id && t.content.toLowerCase().includes(q));
+    return state.texts.some(t => {
+      if (t.sectionId !== s.id) return false;
+      if (t.type === 'multi') {
+        return (t.title || '').toLowerCase().includes(q)
+          || (t.parts || []).some(p => p.content.toLowerCase().includes(q) || p.label.toLowerCase().includes(q));
+      }
+      return (t.content || '').toLowerCase().includes(q);
+    });
   };
 
   const pinned = state.sections
@@ -460,7 +478,12 @@ function renderContent() {
   if (isSearch) {
     items = state.texts.filter(t => {
       const s = state.sections.find(x => x.id === t.sectionId);
-      return t.content.toLowerCase().includes(q) || (s && s.name.toLowerCase().includes(q));
+      if (s && s.name.toLowerCase().includes(q)) return true;
+      if (t.type === 'multi') {
+        return (t.title || '').toLowerCase().includes(q)
+          || (t.parts || []).some(p => p.content.toLowerCase().includes(q) || p.label.toLowerCase().includes(q));
+      }
+      return (t.content || '').toLowerCase().includes(q);
     });
   } else {
     items = textsForSection(state.selectedId)
@@ -491,7 +514,6 @@ function renderContent() {
       ? `<div class="card-section-label">${escHtml(section.name)}</div>`
       : '';
 
-    const visibleText    = text.isShowingTranslated && text.translatedText ? text.translatedText : text.content;
     const translateLabel = text.isShowingTranslated ? 'Original' : 'Translate';
     const isStale        = text.translationStale && !!text.translatedText;
     const translateClass = [
@@ -500,41 +522,113 @@ function renderContent() {
       isStale ? 'is-stale' : '',
     ].filter(Boolean).join(' ');
 
-    card.innerHTML = `
-      ${labelHtml}
-      <div class="card-body">
-        <p class="card-text">${escHtml(visibleText)}</p>
-      </div>
-      <div class="card-footer">
-        <div class="card-actions">
-          <button class="card-action-btn edit-text-btn" data-id="${text.id}">
-            ${icon.edit()} Edit
-          </button>
-          <button class="card-action-btn duplicate-text-btn" data-id="${text.id}">
-            ${icon.duplicate()} Duplicate
-          </button>
-          <button class="card-action-btn delete-text-btn" data-id="${text.id}">
-            ${icon.trash()} Delete
-          </button>
-        </div>
-        <div class="card-footer-right">
-          <button class="${translateClass}" data-id="${text.id}" title="Translate">
-            <span class="translate-icon">${icon.translate()}</span>
-            <span class="translate-label">${translateLabel}</span>
-          </button>
-          <button class="copy-btn" data-id="${text.id}">
-            <span class="copy-icon">${icon.copy()}</span>
-            <span class="copy-label">Copy</span>
-          </button>
-        </div>
-      </div>
-    `;
+    if (text.type === 'multi') {
+      // ── Multi-part card ────────────────────────────────────────────────────
+      const parts = text.parts || [];
+      const partsHtml = parts.map((part, idx) => {
+        const isLast = idx === parts.length - 1;
+        const visibleContent = (text.isShowingTranslated && part.translatedContent)
+          ? part.translatedContent : part.content;
+        const buttonsHtml = isLast
+          ? ''
+          : `
+            <div class="part-actions-right">
+              <button class="part-copy-btn copy-btn" data-part-id="${part.id}">
+                <span class="copy-icon">${icon.copy()}</span>
+                <span class="copy-label">Copy</span>
+              </button>
+            </div>
+          `;
+        return `
+          <div class="multi-part-block" data-part-id="${part.id}">
+            ${part.label ? `<span class="part-label">${escHtml(part.label)}</span>` : ''}
+            <div class="part-content-row">
+              <p class="part-content">${escHtml(visibleContent)}</p>
+              ${buttonsHtml}
+            </div>
+          </div>
+        `;
+      }).join('');
 
-    card.querySelector('.translate-btn').addEventListener('click',       () => handleTranslate(text.id));
-    card.querySelector('.copy-btn').addEventListener('click',            () => handleCopy(text.id));
-    card.querySelector('.edit-text-btn').addEventListener('click',       e => { e.stopPropagation(); promptEditText(text.id); });
-    card.querySelector('.duplicate-text-btn').addEventListener('click',  e => { e.stopPropagation(); duplicateText(text.id); });
-    card.querySelector('.delete-text-btn').addEventListener('click',     e => { e.stopPropagation(); promptDeleteText(text.id); });
+      card.innerHTML = `
+        ${labelHtml}
+        <div class="card-body multi-card-body">
+          <div class="multi-parts-list">${partsHtml}</div>
+        </div>
+        <div class="card-footer multi-card-footer">
+          <div class="card-actions">
+            <button class="card-action-btn edit-text-btn" data-id="${text.id}">
+              ${icon.edit()} Edit
+            </button>
+            <button class="card-action-btn duplicate-text-btn" data-id="${text.id}">
+              ${icon.duplicate()} Duplicate
+            </button>
+            <button class="card-action-btn delete-text-btn" data-id="${text.id}">
+              ${icon.trash()} Delete
+            </button>
+          </div>
+          <div class="card-footer-right">
+            <button class="${translateClass}" data-id="${text.id}" title="Translate all parts">
+              <span class="translate-icon">${icon.translate()}</span>
+              <span class="translate-label">${translateLabel}</span>
+            </button>
+            <button class="copy-btn" data-id="${text.id}">
+              <span class="copy-icon">${icon.copy()}</span>
+              <span class="copy-label">Copy</span>
+            </button>
+          </div>
+        </div>
+      `;
+
+      card.querySelector('.translate-btn').addEventListener('click',       () => handleTranslate(text.id));
+      card.querySelector('.copy-btn[data-id]').addEventListener('click',   () => handleCopy(text.id));
+      card.querySelector('.edit-text-btn').addEventListener('click',       e => { e.stopPropagation(); promptEditMultiText(text.id); });
+      card.querySelector('.duplicate-text-btn').addEventListener('click',  e => { e.stopPropagation(); duplicateText(text.id); });
+      card.querySelector('.delete-text-btn').addEventListener('click',     e => { e.stopPropagation(); promptDeleteText(text.id); });
+      card.querySelectorAll('.part-copy-btn').forEach(btn => {
+        btn.addEventListener('click', e => { e.stopPropagation(); handlePartCopy(text.id, btn.dataset.partId); });
+      });
+
+    } else {
+      // ── Single reply card (original behavior) ──────────────────────────────
+      const visibleText = text.isShowingTranslated && text.translatedText ? text.translatedText : text.content;
+
+      card.innerHTML = `
+        ${labelHtml}
+        <div class="card-body">
+          <p class="card-text">${escHtml(visibleText)}</p>
+        </div>
+        <div class="card-footer">
+          <div class="card-actions">
+            <button class="card-action-btn edit-text-btn" data-id="${text.id}">
+              ${icon.edit()} Edit
+            </button>
+            <button class="card-action-btn duplicate-text-btn" data-id="${text.id}">
+              ${icon.duplicate()} Duplicate
+            </button>
+            <button class="card-action-btn delete-text-btn" data-id="${text.id}">
+              ${icon.trash()} Delete
+            </button>
+          </div>
+          <div class="card-footer-right">
+            <button class="${translateClass}" data-id="${text.id}" title="Translate">
+              <span class="translate-icon">${icon.translate()}</span>
+              <span class="translate-label">${translateLabel}</span>
+            </button>
+            <button class="copy-btn" data-id="${text.id}">
+              <span class="copy-icon">${icon.copy()}</span>
+              <span class="copy-label">Copy</span>
+            </button>
+          </div>
+        </div>
+      `;
+
+      card.querySelector('.translate-btn').addEventListener('click',       () => handleTranslate(text.id));
+      card.querySelector('.copy-btn').addEventListener('click',            () => handleCopy(text.id));
+      card.querySelector('.edit-text-btn').addEventListener('click',       e => { e.stopPropagation(); promptEditText(text.id); });
+      card.querySelector('.duplicate-text-btn').addEventListener('click',  e => { e.stopPropagation(); duplicateText(text.id); });
+      card.querySelector('.delete-text-btn').addEventListener('click',     e => { e.stopPropagation(); promptDeleteText(text.id); });
+    }
 
     container.appendChild(card);
   });
@@ -630,7 +724,7 @@ function addText(sectionId, content) {
   const trimmed = content.trim();
   if (!trimmed) return;
   state.texts.push({
-    id: uid(), sectionId, content: trimmed, usageCount: 0,
+    id: uid(), sectionId, type: 'single', content: trimmed, usageCount: 0,
     translatedText: null, isShowingTranslated: false, translationStale: false,
   });
   save();
@@ -652,6 +746,51 @@ function editText(id, content) {
   }
 }
 
+function addMultiText(sectionId, title, parts) {
+  // parts: [{ label, content }]
+  if (!parts || parts.length === 0) return;
+  const cleanParts = parts.map(p => ({
+    id:                uid(),
+    label:             p.label.trim(),
+    content:           p.content.trim(),
+    translatedContent: null,
+  }));
+  state.texts.push({
+    id: uid(), sectionId, type: 'multi', title: title.trim(), parts: cleanParts,
+    usageCount: 0, translatedText: null, isShowingTranslated: false, translationStale: false,
+  });
+  save();
+  render();
+}
+
+function editMultiText(id, title, parts) {
+  const t = state.texts.find(x => x.id === id);
+  if (!t || t.type !== 'multi') return;
+  const cleanParts = parts.map(p => ({
+    id:                p.id || uid(),
+    label:             p.label.trim(),
+    content:           p.content.trim(),
+    translatedContent: p.translatedContent ?? null,
+  }));
+  // If any content changed, mark translation stale
+  const changed = cleanParts.some((p, i) => {
+    const old = t.parts[i];
+    return !old || old.content !== p.content;
+  }) || cleanParts.length !== t.parts.length;
+  if (changed && t.isShowingTranslated) {
+    t.isShowingTranslated = false;
+    t.translationStale    = true;
+  } else if (changed && t.translatedText) {
+    t.translationStale = true;
+    // clear per-part translated content since it's now stale
+    cleanParts.forEach(p => { p.translatedContent = null; });
+  }
+  t.title = title.trim();
+  t.parts = cleanParts;
+  save();
+  render();
+}
+
 function deleteText(id) {
   state.texts = state.texts.filter(x => x.id !== id);
   save();
@@ -662,15 +801,27 @@ function duplicateText(id) {
   const t = state.texts.find(x => x.id === id);
   if (!t) return;
   const idx = state.texts.indexOf(t);
-  state.texts.splice(idx + 1, 0, {
+  const base = {
     id:                  uid(),
     sectionId:           t.sectionId,
-    content:             t.content,
+    type:                t.type ?? 'single',
     usageCount:          0,
-    translatedText:      t.translatedText ?? null,
+    translatedText:      null,
     isShowingTranslated: false,
     translationStale:    false,
-  });
+  };
+  if (t.type === 'multi') {
+    base.title = t.title ?? '';
+    base.parts = (t.parts || []).map(p => ({
+      id:                uid(),
+      label:             p.label,
+      content:           p.content,
+      translatedContent: null,
+    }));
+  } else {
+    base.content = t.content;
+  }
+  state.texts.splice(idx + 1, 0, base);
   save();
   render();
 }
@@ -681,7 +832,17 @@ async function handleCopy(id) {
   const t = state.texts.find(x => x.id === id);
   if (!t) return;
 
-  const textToCopy = t.isShowingTranslated && t.translatedText ? t.translatedText : t.content;
+  let textToCopy;
+  if (t.type === 'multi') {
+    // Copy all parts in order (translated if showing)
+    textToCopy = (t.parts || []).map(p => {
+      const content = (t.isShowingTranslated && p.translatedContent) ? p.translatedContent : p.content;
+      return p.label ? `${p.label}\n${content}` : content;
+    }).join('\n\n');
+  } else {
+    textToCopy = t.isShowingTranslated && t.translatedText ? t.translatedText : t.content;
+  }
+
   const ok = await copyToClipboard(textToCopy);
   if (!ok) { console.warn('Quick Replies: clipboard write failed.'); return; }
 
@@ -690,8 +851,9 @@ async function handleCopy(id) {
   save();
 
   // ── Visual feedback on the card and button ────────────────────────────────
-  const card = document.querySelector(`.reply-card[data-id="${id}"]`);
-  const btn  = document.querySelector(`.copy-btn[data-id="${id}"]`);
+  const card   = document.querySelector(`.reply-card[data-id="${id}"]`);
+  const copyAllBtn = document.querySelector(`.copy-all-btn[data-id="${id}"]`);
+  const btn    = copyAllBtn || document.querySelector(`.copy-btn[data-id="${id}"]`);
 
   if (card) {
     card.classList.add('copied');
@@ -712,7 +874,45 @@ async function handleCopy(id) {
   showToast('Copied to clipboard');
 
   // ── FLIP-animate the card to its new sorted position ─────────────────────
-  // Runs immediately — the shimmer plays on the card as it moves, which looks premium.
+  reorderCardsAnimated();
+}
+
+async function handlePartCopy(textId, partId) {
+  const t = state.texts.find(x => x.id === textId);
+  if (!t || t.type !== 'multi') return;
+
+  const part = (t.parts || []).find(p => p.id === partId);
+  if (!part) return;
+
+  const textToCopy = (t.isShowingTranslated && part.translatedContent) ? part.translatedContent : part.content;
+  const ok = await copyToClipboard(textToCopy);
+  if (!ok) { console.warn('Quick Replies: clipboard write failed.'); return; }
+
+  // Increment outer card's usage count
+  t.usageCount++;
+  save();
+
+  // Visual feedback on the part copy btn
+  const btn = document.querySelector(`.part-copy-btn[data-part-id="${partId}"]`);
+  if (btn) {
+    btn.classList.add('copied');
+    btn.querySelector('.copy-icon').innerHTML    = icon.check();
+    btn.querySelector('.copy-label').textContent = 'Copied';
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.querySelector('.copy-icon').innerHTML    = icon.copy();
+      btn.querySelector('.copy-label').textContent = 'Copy';
+    }, 1600);
+  }
+
+  // Shimmer on the outer card
+  const card = document.querySelector(`.reply-card[data-id="${textId}"]`);
+  if (card) {
+    card.classList.add('copied');
+    setTimeout(() => card.classList.remove('copied'), 1300);
+  }
+
+  showToast('Copied to clipboard');
   reorderCardsAnimated();
 }
 
@@ -729,7 +929,12 @@ async function handleTranslate(id) {
     return;
   }
 
-  if (t.translatedText && !t.translationStale) {
+  // For multi-part: check if all parts already have translations
+  const hasTranslation = t.type === 'multi'
+    ? ((t.parts || []).every(p => p.translatedContent) && !t.translationStale)
+    : (t.translatedText && !t.translationStale);
+
+  if (hasTranslation) {
     t.isShowingTranslated = true;
     save();
     _applyTranslateState(id, t);
@@ -744,24 +949,48 @@ async function handleTranslate(id) {
   }
 
   try {
-    const res = await fetch('/.netlify/functions/translate', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ text: t.content }),
-    });
+    if (t.type === 'multi') {
+      // Translate each part sequentially
+      for (const part of (t.parts || [])) {
+        if (part.translatedContent && !t.translationStale) continue;
+        const res = await fetch('/.netlify/functions/translate', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ text: part.content }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || `HTTP ${res.status}`);
+        }
+        const data = await res.json();
+        if (!data.translatedText || typeof data.translatedText !== 'string' || !data.translatedText.trim()) {
+          throw new Error('Empty or missing translation in response');
+        }
+        part.translatedContent = data.translatedText.trim();
+      }
+      t.translatedText      = (t.parts || []).map(p => p.translatedContent || '').join('\n\n');
+      t.isShowingTranslated = true;
+      t.translationStale    = false;
+    } else {
+      const res = await fetch('/.netlify/functions/translate', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ text: t.content }),
+      });
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || `HTTP ${res.status}`);
-    }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
 
-    const data = await res.json();
-    if (!data.translatedText || typeof data.translatedText !== 'string' || !data.translatedText.trim()) {
-      throw new Error('Empty or missing translation in response');
+      const data = await res.json();
+      if (!data.translatedText || typeof data.translatedText !== 'string' || !data.translatedText.trim()) {
+        throw new Error('Empty or missing translation in response');
+      }
+      t.translatedText      = data.translatedText.trim();
+      t.isShowingTranslated = true;
+      t.translationStale    = false;
     }
-    t.translatedText      = data.translatedText.trim();
-    t.isShowingTranslated = true;
-    t.translationStale    = false;
     save();
     _applyTranslateState(id, t);
     showToast('Translation complete');
@@ -780,12 +1009,26 @@ function _applyTranslateState(id, t) {
   const card = document.querySelector(`.reply-card[data-id="${id}"]`);
   if (!card) return;
 
-  const textEl = card.querySelector('.card-text');
-  const btn    = card.querySelector('.translate-btn');
-
-  if (textEl) {
-    textEl.textContent = t.isShowingTranslated && t.translatedText ? t.translatedText : t.content;
+  if (t.type === 'multi') {
+    // Update each part block
+    (t.parts || []).forEach(part => {
+      const partBlock = card.querySelector(`.multi-part-block[data-part-id="${part.id}"]`);
+      if (!partBlock) return;
+      const contentEl = partBlock.querySelector('.part-content');
+      if (contentEl) {
+        contentEl.textContent = (t.isShowingTranslated && part.translatedContent)
+          ? part.translatedContent
+          : part.content;
+      }
+    });
+  } else {
+    const textEl = card.querySelector('.card-text');
+    if (textEl) {
+      textEl.textContent = t.isShowingTranslated && t.translatedText ? t.translatedText : t.content;
+    }
   }
+
+  const btn    = card.querySelector('.translate-btn');
 
   if (btn) {
     btn.disabled = false;
@@ -913,13 +1156,20 @@ function onModalInputKey(e) {
 
 function closeModal() {
   document.getElementById('modalOverlay').classList.remove('visible');
+  document.getElementById('modalSave').classList.remove('hidden');
   _modalCallback = null;
 }
 
 function submitModal() {
-  const input = document.getElementById('modalInput');
-  if (input && _modalCallback) {
-    _modalCallback(input.value);
+  // Multi-part modal: callback takes no args (reads from DOM itself)
+  if (_modalCallback) {
+    const input = document.getElementById('modalInput');
+    if (input) {
+      _modalCallback(input.value);
+    } else {
+      // multi-part modal has no #modalInput — just call the callback
+      _modalCallback();
+    }
     closeModal();
   }
 }
@@ -954,10 +1204,177 @@ function promptDeleteSection(id) {
 
 function promptAddText() {
   if (!state.selectedId) return;
-  showModal({
-    title: 'New Quick Reply', placeholder: 'Type your reply text here…',
-    multiline: true, hint: 'Tip: press Cmd+Enter to save quickly.',
-    onSave: content => addText(state.selectedId, content)
+  showTypePickerModal();
+}
+
+function showTypePickerModal() {
+  _modalCallback = null;
+  document.getElementById('modalTitle').textContent = 'Add Reply';
+
+  const area = document.getElementById('modalInputArea');
+  area.innerHTML = `
+    <div class="type-picker">
+      <button class="type-picker-btn" id="pickSingle">
+        <span class="type-picker-icon">${icon.copy()}</span>
+        <span class="type-picker-text">
+          <strong>Обычный ответ</strong>
+          <span>Один текстовый блок</span>
+        </span>
+      </button>
+      <button class="type-picker-btn" id="pickMulti">
+        <span class="type-picker-icon">${icon.duplicate()}</span>
+        <span class="type-picker-text">
+          <strong>Составной ответ</strong>
+          <span>Несколько частей в одной карточке</span>
+        </span>
+      </button>
+    </div>
+  `;
+
+  // Hide Save button — type picker is click-to-select
+  document.getElementById('modalSave').classList.add('hidden');
+  document.getElementById('modalOverlay').classList.add('visible');
+
+  document.getElementById('pickSingle').addEventListener('click', () => {
+    closeModal();
+    showModal({
+      title: 'New Quick Reply', placeholder: 'Type your reply text here…',
+      multiline: true, hint: 'Tip: press Cmd+Enter to save quickly.',
+      onSave: content => addText(state.selectedId, content)
+    });
+  });
+  document.getElementById('pickMulti').addEventListener('click', () => {
+    closeModal();
+    showMultiPartModal({ mode: 'add' });
+  });
+}
+
+function showMultiPartModal({ mode, textId }) {
+  // mode: 'add' | 'edit'
+  let existing = null;
+  if (mode === 'edit') {
+    existing = state.texts.find(x => x.id === textId);
+    if (!existing) return;
+  }
+
+  _modalCallback = null;
+  document.getElementById('modalTitle').textContent = mode === 'edit' ? 'Редактировать составной ответ' : 'Новый составной ответ';
+  document.getElementById('modalSave').classList.remove('hidden');
+
+  const initParts = existing
+    ? existing.parts.map(p => ({ id: p.id, label: p.label, content: p.content, translatedContent: p.translatedContent }))
+    : [
+        { id: uid(), label: '1/2', content: '' },
+        { id: uid(), label: '2/2', content: '' },
+      ];
+
+  function renderMultiModal() {
+    const area = document.getElementById('modalInputArea');
+    area.innerHTML = `
+      <div class="multi-modal-form">
+        <div id="multiModalParts"></div>
+        <button class="multi-modal-add-part-btn" id="addPartBtn">
+          ${icon.plus()} Добавить часть
+        </button>
+      </div>
+    `;
+
+    const partsContainer = document.getElementById('multiModalParts');
+
+    function renderParts() {
+      partsContainer.innerHTML = '';
+      initParts.forEach((part, idx) => {
+        const row = document.createElement('div');
+        row.className = 'multi-modal-part-row';
+        row.dataset.idx = idx;
+        row.innerHTML = `
+          <div class="multi-modal-part-header">
+            <input
+              class="modal-input part-label-input"
+              type="text"
+              placeholder="Метка (напр. 1/2)"
+              value="${escHtml(part.label)}"
+              style="width:90px;flex-shrink:0"
+            >
+            ${initParts.length > 2
+              ? `<button class="multi-modal-remove-btn" title="Remove part">${icon.trash()}</button>`
+              : ''}
+          </div>
+          <textarea
+            class="modal-textarea part-content-input"
+            placeholder="Текст части ${idx + 1}…"
+            style="min-height:80px;margin-top:5px"
+          >${escHtml(part.content)}</textarea>
+        `;
+
+        // Live-update initParts on change
+        row.querySelector('.part-label-input').addEventListener('input', e => {
+          initParts[idx].label = e.target.value;
+        });
+        row.querySelector('.part-content-input').addEventListener('input', e => {
+          initParts[idx].content = e.target.value;
+        });
+
+        // Cmd+Enter saves from textarea
+        row.querySelector('.part-content-input').addEventListener('keydown', e => {
+          if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+            e.preventDefault();
+            submitMultiModal();
+          }
+        });
+
+        if (initParts.length > 2) {
+          row.querySelector('.multi-modal-remove-btn').addEventListener('click', () => {
+            initParts.splice(idx, 1);
+            renderParts();
+          });
+        }
+
+        partsContainer.appendChild(row);
+      });
+    }
+
+    renderParts();
+
+    document.getElementById('addPartBtn').addEventListener('click', () => {
+      const nextNum = initParts.length + 1;
+      initParts.push({ id: uid(), label: `${nextNum}/${nextNum}`, content: '', translatedContent: null });
+      renderParts();
+    });
+  }
+
+  renderMultiModal();
+
+  function submitMultiModal() {
+    const titleVal = '';
+    const partsVal = initParts.map((p, idx) => {
+      const rows = document.querySelectorAll('#multiModalParts .multi-modal-part-row');
+      const row  = rows[idx];
+      if (row) {
+        p.label   = row.querySelector('.part-label-input')?.value   || p.label;
+        p.content = row.querySelector('.part-content-input')?.value || p.content;
+      }
+      return p;
+    }).filter(p => p.content.trim());
+
+    if (partsVal.length === 0) { closeModal(); return; }
+
+    if (mode === 'edit') {
+      editMultiText(textId, titleVal, partsVal);
+    } else {
+      addMultiText(state.selectedId, titleVal, partsVal);
+    }
+    closeModal();
+  }
+
+  _modalCallback = () => submitMultiModal();
+
+  document.getElementById('modalOverlay').classList.add('visible');
+
+  // Focus the first textarea
+  requestAnimationFrame(() => {
+    const first = document.querySelector('#multiModalParts .part-content-input');
+    if (first) first.focus();
   });
 }
 
@@ -969,6 +1386,10 @@ function promptEditText(id) {
     multiline: true, hint: 'Tip: press Cmd+Enter to save quickly.',
     onSave: content => editText(id, content)
   });
+}
+
+function promptEditMultiText(id) {
+  showMultiPartModal({ mode: 'edit', textId: id });
 }
 
 function promptDeleteText(id) {

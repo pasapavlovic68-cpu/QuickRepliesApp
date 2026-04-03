@@ -21,7 +21,20 @@
         Add Section
       </button>
     </div>
+
     <div class="section-list" id="sectionList"></div>
+
+    <div class="sidebar-bottom">
+      <button id="btnExport" class="btn-sidebar-tool" title="Export all data as a JSON backup file">
+        <span id="iconExport"></span>
+        Export
+      </button>
+      <label class="btn-sidebar-tool" title="Import data from a JSON backup file" for="importFileInput">
+        <span id="iconImport"></span>
+        Import
+      </label>
+      <input type="file" id="importFileInput" accept=".json" style="display:none">
+    </div>
   </aside>
 
   <!-- ── Main Content ──────────────────────────────────────────────────── -->

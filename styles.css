@@ -17,7 +17,7 @@
   --accent-hover:     rgba(88, 151, 253, 0.26);
   --section-active:   rgba(88, 151, 253, 0.13);
 
-  /* Copied / success — blue accent family (no green) */
+  /* Copied / success — blue accent family */
   --success:          #5897fd;
   --success-dim:      rgba(88, 151, 253, 0.13);
   --success-border:   rgba(88, 151, 253, 0.40);
@@ -43,7 +43,7 @@
   --bg-modal:         rgba(18, 21, 32, 0.97);
 
   /* Layout */
-  --sidebar-w:        228px;
+  --sidebar-w:        248px;   /* wider for long Russian names */
 
   /* Radii */
   --r-xs:  6px;
@@ -52,8 +52,8 @@
   --r-lg:  16px;
 
   /* Transitions */
-  --t:    0.16s ease;
-  --t-md: 0.24s ease;
+  --t:    0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --t-md: 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 /* ─── Base ─────────────────────────────────────────────────────────────────── */
@@ -61,7 +61,6 @@
 html, body {
   height: 100%;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
-  /* Rich dark graphite + smoky blue gradient — not flat black */
   background:
     linear-gradient(155deg, #141a26 0%, #0f1219 45%, #0c0e17 100%);
   color: var(--text-1);
@@ -108,7 +107,8 @@ button {
 
 .app {
   display: flex;
-  height: 100vh;
+  height: 100vh;    /* fallback */
+  height: 100dvh;   /* stable across all desktop window sizes */
   overflow: hidden;
   position: relative;
   z-index: 1;
@@ -121,7 +121,7 @@ button {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  /* Slightly darker glass panel */
+  min-height: 0;   /* lets internal section-list scroll correctly */
   background: rgba(10, 12, 20, 0.72);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
@@ -170,27 +170,61 @@ button {
   box-shadow: 0 0 16px rgba(88, 151, 253, 0.1);
 }
 
-.btn-add-section:active {
-  opacity: 0.78;
-}
+.btn-add-section:active { opacity: 0.78; }
 
 /* Section List */
 .section-list {
   flex: 1;
+  min-height: 0;   /* allows scroll when sections overflow */
   overflow-y: auto;
-  padding: 8px 0 12px;
+  padding: 8px 0 4px;
 }
 
-.section-list::-webkit-scrollbar {
-  width: 4px;
-}
-.section-list::-webkit-scrollbar-track {
-  background: transparent;
-}
+.section-list::-webkit-scrollbar { width: 4px; }
+.section-list::-webkit-scrollbar-track { background: transparent; }
 .section-list::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 2px;
 }
+
+/* ─── Sidebar Bottom — Export / Import ────────────────────────────────────── */
+
+.sidebar-bottom {
+  flex-shrink: 0;
+  padding: 8px 10px 14px;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  gap: 6px;
+}
+
+.btn-sidebar-tool {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 6px;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+  color: var(--text-3);
+  font-size: 11.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color var(--t), background var(--t), border-color var(--t);
+  white-space: nowrap;
+  text-align: center;
+  font-family: inherit;
+  user-select: none;
+}
+
+.btn-sidebar-tool:hover {
+  color: var(--text-2);
+  background: rgba(255, 255, 255, 0.07);
+  border-color: var(--border-mid);
+}
+
+.btn-sidebar-tool:active { opacity: 0.7; }
 
 /* Section group labels */
 .section-group-label {
@@ -218,20 +252,17 @@ button {
   margin: 1px 6px;
   border-radius: var(--r-sm);
   cursor: pointer;
-  transition: background var(--t), box-shadow var(--t);
+  transition: background var(--t), box-shadow var(--t-md);
   min-height: 34px;
 }
 
-.section-item:hover {
-  background: rgba(255, 255, 255, 0.055);
-}
+.section-item:hover { background: rgba(255, 255, 255, 0.055); }
 
 .section-item:hover .section-actions {
   opacity: 1;
   pointer-events: all;
 }
 
-/* Active section: blue accent bar on left via inset box-shadow */
 .section-item.active {
   background: var(--section-active);
   box-shadow: inset 2.5px 0 0 var(--accent);
@@ -306,10 +337,7 @@ button {
   color: var(--danger);
 }
 
-/* Pin button — accent color when section is currently pinned */
-.icon-btn.pin-btn.is-pinned {
-  color: var(--accent);
-}
+.icon-btn.pin-btn.is-pinned { color: var(--accent); }
 .icon-btn.pin-btn.is-pinned:hover {
   background: var(--accent-dim);
   color: var(--accent);
@@ -322,19 +350,25 @@ button {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  overflow: hidden;
+  min-height: 0;      /* allows the column to shrink inside the row flex */
+  overflow-x: hidden; /* clip horizontal only — never constrain vertical so .texts-container can scroll */
 }
 
-/* Content Header */
+/* ─── Content Header — glass strip, sits above the scroll area ────────────── */
+
 .content-header {
-  padding: 16px 18px 12px;
-  border-bottom: 1px solid var(--border-subtle);
   flex-shrink: 0;
+  padding: 15px 18px 12px;
+  /* Frosted glass — separates header from scrolling cards below */
+  background: rgba(11, 13, 22, 0.75);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.075);
+  /* Subtle bottom glow line */
+  box-shadow: 0 1px 0 rgba(88, 151, 253, 0.06);
 }
 
-.content-header.hidden {
-  display: none;
-}
+.content-header.hidden { display: none; }
 
 .content-title-row {
   display: flex;
@@ -379,9 +413,7 @@ button {
   box-shadow: 0 0 14px rgba(88, 151, 253, 0.12);
 }
 
-.btn-add-text:active {
-  opacity: 0.78;
-}
+.btn-add-text:active { opacity: 0.78; }
 
 /* Shared icon span inside buttons */
 .btn-icon {
@@ -420,9 +452,7 @@ button {
   user-select: text;
 }
 
-.search-input::placeholder {
-  color: var(--text-3);
-}
+.search-input::placeholder { color: var(--text-3); }
 
 .search-input:focus {
   border-color: var(--border-focus);
@@ -457,19 +487,16 @@ button {
 
 .texts-container {
   flex: 1;
+  min-height: 0;       /* KEY — without this flex: 1 expands instead of scrolling */
   overflow-y: auto;
-  padding: 12px 18px 16px;
+  padding: 14px 18px 32px;   /* generous bottom padding so last card footer clears */
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 9px;
 }
 
-.texts-container::-webkit-scrollbar {
-  width: 5px;
-}
-.texts-container::-webkit-scrollbar-track {
-  background: transparent;
-}
+.texts-container::-webkit-scrollbar { width: 5px; }
+.texts-container::-webkit-scrollbar-track { background: transparent; }
 .texts-container::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 3px;
@@ -478,14 +505,8 @@ button {
 /* ─── Card Entry Animation ─────────────────────────────────────────────────── */
 
 @keyframes card-enter {
-  from {
-    opacity: 0;
-    transform: translateY(7px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* ─── Shimmer on Copy ──────────────────────────────────────────────────────── */
@@ -503,8 +524,8 @@ button {
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-md);
   overflow: hidden;
-  /* animate entry */
-  animation: card-enter 0.22s ease both;
+  flex-shrink: 0;     /* never compress cards — forces overflow → scroll instead */
+  animation: card-enter 0.30s cubic-bezier(0.22, 1, 0.36, 1) both;
   transition:
     background var(--t),
     border-color var(--t),
@@ -513,7 +534,6 @@ button {
   cursor: default;
 }
 
-/* Lift + glow on hover — whole card lights up */
 .reply-card:hover {
   background: var(--bg-card-hover);
   border-color: rgba(255, 255, 255, 0.13);
@@ -529,7 +549,6 @@ button {
   pointer-events: all;
 }
 
-/* Copied success state — overrides hover */
 .reply-card.copied {
   border-color: var(--success-border);
   background: var(--success-dim);
@@ -546,11 +565,11 @@ button {
   inset: 0;
   background: linear-gradient(
     90deg,
-    transparent          0%,
+    transparent              0%,
     rgba(88, 151, 253, 0.16) 40%,
     rgba(88, 151, 253, 0.24) 50%,
     rgba(88, 151, 253, 0.16) 60%,
-    transparent          100%
+    transparent              100%
   );
   animation: card-shimmer 0.65s ease-out forwards;
   pointer-events: none;
@@ -559,7 +578,7 @@ button {
 
 /* Section label (search mode) */
 .card-section-label {
-  padding: 9px 13px 0;
+  padding: 9px 14px 0;
   font-size: 10.5px;
   font-weight: 600;
   color: var(--accent);
@@ -569,13 +588,13 @@ button {
 
 /* Card body */
 .card-body {
-  padding: 11px 13px 8px;
+  padding: 12px 14px 9px;
 }
 
 .card-text {
   font-size: 13.5px;
   color: var(--text-1);
-  line-height: 1.62;
+  line-height: 1.65;
   white-space: pre-wrap;
   word-break: break-word;
   user-select: text;
@@ -586,14 +605,14 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 2px 8px 9px 13px;
+  padding: 2px 10px 10px 14px;
   gap: 8px;
 }
 
 .card-actions {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 1px;
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--t);
@@ -603,7 +622,7 @@ button {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 3px 8px;
+  padding: 3px 7px;
   background: transparent;
   border: none;
   border-radius: var(--r-xs);
@@ -625,7 +644,16 @@ button {
   background: var(--danger-dim);
 }
 
-/* ─── Copy Button — pill shape, more premium ────────────────────────────────── */
+/* ─── Card Footer Right — Translate + Copy grouped ────────────────────────── */
+
+.card-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* ─── Copy Button — pill shape ──────────────────────────────────────────────── */
 
 .copy-btn {
   display: flex;
@@ -634,7 +662,7 @@ button {
   padding: 5px 14px;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 20px;       /* pill */
+  border-radius: 20px;
   color: var(--text-2);
   font-size: 12px;
   font-weight: 500;
@@ -649,7 +677,7 @@ button {
   flex-shrink: 0;
   letter-spacing: 0.1px;
   position: relative;
-  z-index: 2;   /* sit above shimmer pseudo-element */
+  z-index: 2;
 }
 
 .copy-btn:hover {
@@ -659,9 +687,7 @@ button {
   box-shadow: 0 0 14px rgba(88, 151, 253, 0.14);
 }
 
-.copy-btn:active {
-  transform: scale(0.95);
-}
+.copy-btn:active { transform: scale(0.95); }
 
 .copy-btn.copied {
   background: var(--success-dim);
@@ -676,19 +702,82 @@ button {
   align-items: center;
 }
 
+/* ─── Translate Button ─────────────────────────────────────────────────────── */
+
+.translate-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background var(--t),
+    border-color var(--t),
+    color var(--t),
+    opacity var(--t);
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: 0.1px;
+  position: relative;
+  z-index: 2;
+  font-family: inherit;
+}
+
+.translate-btn:hover {
+  background: rgba(255, 255, 255, 0.095);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: var(--text-2);
+}
+
+.translate-btn:active { transform: scale(0.95); }
+
+.translate-btn.is-translated {
+  background: var(--accent-dim);
+  border-color: var(--accent-border);
+  color: var(--accent);
+}
+
+.translate-btn.is-translated:hover {
+  background: var(--accent-hover);
+  border-color: rgba(88, 151, 253, 0.48);
+  box-shadow: 0 0 14px rgba(88, 151, 253, 0.14);
+}
+
+.translate-btn.is-stale {
+  border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.13);
+}
+
+.translate-btn.translating {
+  opacity: 0.5;
+  cursor: default;
+  pointer-events: none;
+}
+
+.translate-icon,
+.translate-label {
+  display: flex;
+  align-items: center;
+}
+
 /* ─── Empty State ──────────────────────────────────────────────────────────── */
 
 .empty-state {
   flex: 1;
+  min-height: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 48px 32px;
 }
 
-.empty-state.hidden {
-  display: none;
-}
+.empty-state.hidden { display: none; }
 
 .empty-state-inner {
   text-align: center;
@@ -757,9 +846,7 @@ button {
   transform: scale(1) translateY(0);
 }
 
-.modal-header {
-  padding: 20px 22px 0;
-}
+.modal-header { padding: 20px 22px 0; }
 
 .modal-header h3 {
   font-size: 15px;
@@ -768,9 +855,7 @@ button {
   letter-spacing: -0.2px;
 }
 
-.modal-body {
-  padding: 14px 22px;
-}
+.modal-body { padding: 14px 22px; }
 
 .modal-input {
   width: 100%;
@@ -810,9 +895,7 @@ button {
 }
 
 .modal-input::placeholder,
-.modal-textarea::placeholder {
-  color: var(--text-3);
-}
+.modal-textarea::placeholder { color: var(--text-3); }
 
 .modal-hint {
   margin-top: 7px;
@@ -861,9 +944,7 @@ button {
 }
 
 .modal-btn.primary:active,
-.modal-btn.secondary:active {
-  opacity: 0.75;
-}
+.modal-btn.secondary:active { opacity: 0.75; }
 
 /* ─── Toast Notification ───────────────────────────────────────────────────── */
 
@@ -906,89 +987,9 @@ button {
   flex-shrink: 0;
 }
 
-/* ─── Card Footer Right (translate + copy grouped) ────────────────────────── */
-
-.card-footer-right {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-/* ─── Translate Button — same pill family as Copy ──────────────────────────── */
-
-.translate-btn {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 12px;
-  background: rgba(255, 255, 255, 0.055);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 20px;
-  color: var(--text-3);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition:
-    background var(--t),
-    border-color var(--t),
-    color var(--t),
-    opacity var(--t);
-  white-space: nowrap;
-  flex-shrink: 0;
-  letter-spacing: 0.1px;
-  position: relative;
-  z-index: 2;
-  font-family: inherit;
-}
-
-.translate-btn:hover {
-  background: rgba(255, 255, 255, 0.095);
-  border-color: rgba(255, 255, 255, 0.14);
-  color: var(--text-2);
-}
-
-.translate-btn:active {
-  transform: scale(0.95);
-}
-
-/* Active state — showing translation */
-.translate-btn.is-translated {
-  background: var(--accent-dim);
-  border-color: var(--accent-border);
-  color: var(--accent);
-}
-
-.translate-btn.is-translated:hover {
-  background: var(--accent-hover);
-  border-color: rgba(88, 151, 253, 0.48);
-  box-shadow: 0 0 14px rgba(88, 151, 253, 0.14);
-}
-
-/* Stale — translation exists but content changed, needs refresh */
-.translate-btn.is-stale {
-  border-style: dashed;
-  border-color: rgba(255, 255, 255, 0.13);
-}
-
-/* Loading state */
-.translate-btn.translating {
-  opacity: 0.5;
-  cursor: default;
-  pointer-events: none;
-}
-
-.translate-icon,
-.translate-label {
-  display: flex;
-  align-items: center;
-}
-
 /* ─── Utility ──────────────────────────────────────────────────────────────── */
 
-.hidden {
-  display: none !important;
-}
+.hidden { display: none !important; }
 
 /* Thin global scrollbar */
 * {

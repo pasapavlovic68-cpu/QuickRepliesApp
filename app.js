@@ -24,26 +24,32 @@ function save() {
   }));
 }
 
+function migrateSection(s) {
+  return {
+    ...s,
+    openCount: s.openCount  ?? 0,
+    pinned:    s.pinned     ?? false,
+    pinnedAt:  s.pinnedAt   ?? null,
+  };
+}
+
+function migrateText(t) {
+  return {
+    ...t,
+    usageCount:          t.usageCount          ?? 0,
+    translatedText:      t.translatedText      ?? null,
+    isShowingTranslated: t.isShowingTranslated  ?? false,
+    translationStale:    t.translationStale     ?? false,
+  };
+}
+
 function load() {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (raw) {
     try {
       const data = JSON.parse(raw);
-      // Safely migrate existing data — add any missing fields
-      state.sections = (data.sections || []).map(s => ({
-        ...s,
-        openCount: s.openCount  ?? 0,
-        pinned:    s.pinned     ?? false,
-        pinnedAt:  s.pinnedAt   ?? null,
-      }));
-      state.texts = (data.texts || []).map(t => ({
-        ...t,
-        usageCount:          t.usageCount          ?? 0,
-        // Translation fields — safe defaults for old records
-        translatedText:      t.translatedText      ?? null,
-        isShowingTranslated: t.isShowingTranslated  ?? false,
-        translationStale:    t.translationStale     ?? false,
-      }));
+      state.sections = (data.sections || []).map(migrateSection);
+      state.texts    = (data.texts    || []).map(migrateText);
     } catch {
       state.sections = [];
       state.texts    = [];
@@ -63,15 +69,17 @@ function uid() {
 // ─── Demo Data ────────────────────────────────────────────────────────────────
 
 function seedDemo() {
-  const mkSection = (name, usageCount) => ({ id: uid(), name, usageCount, openCount: 0, pinned: false, pinnedAt: null });
+  const mkSection = (name, usageCount) => ({
+    id: uid(), name, usageCount, openCount: 0, pinned: false, pinnedAt: null,
+  });
 
-  const sVerification       = mkSection('Верификация', 14);
-  const sReturnMoney        = mkSection('Верни мои деньги', 9);
-  const sTrust              = mkSection('Доверие', 7);
-  const sWhenWillYou        = mkSection('Когда заберёшь свои деньги', 5);
-  const sGiveLoan           = mkSection('Дай мне в долг', 3);
-  const sTax                = mkSection('Налог', 2);
-  const sNoMoney            = mkSection('Нет денег', 1);
+  const sVerification = mkSection('Верификация', 14);
+  const sReturnMoney  = mkSection('Верни мои деньги', 9);
+  const sTrust        = mkSection('Доверие', 7);
+  const sWhenWillYou  = mkSection('Когда заберёшь свои деньги', 5);
+  const sGiveLoan     = mkSection('Дай мне в долг', 3);
+  const sTax          = mkSection('Налог', 2);
+  const sNoMoney      = mkSection('Нет денег', 1);
 
   state.sections = [sVerification, sReturnMoney, sTrust, sWhenWillYou, sGiveLoan, sTax, sNoMoney];
 
@@ -81,38 +89,31 @@ function seedDemo() {
   });
 
   state.texts = [
-    // Verification
     mkText(sVerification.id, "Thank you for reaching out! To verify your account, please provide your full name, date of birth, and the last 4 digits of your SSN. We'll get this sorted for you right away.", 6),
     mkText(sVerification.id, 'For security purposes, we need to confirm your identity before proceeding. Could you please confirm the email address and phone number associated with your account?', 4),
     mkText(sVerification.id, 'Great news — your identity has been successfully verified! Your account is now fully activated and ready to use. Welcome aboard!', 4),
     mkText(sVerification.id, "We've sent a one-time verification code to your registered email address. Please enter it within 10 minutes to complete the process. Don't see it? Check your spam folder.", 2),
 
-    // Return My Money
     mkText(sReturnMoney.id, 'I completely understand your frustration, and I sincerely apologize for the inconvenience. Your refund has been initiated — please allow 3–5 business days for the funds to appear on your statement.', 4),
     mkText(sReturnMoney.id, "Your refund request is confirmed and currently under review by our finance team. You'll receive a confirmation email within 24 hours with the exact timeline and transaction reference.", 3),
     mkText(sReturnMoney.id, "A full refund has been processed back to your original payment method. Transaction reference: [TXN-ID]. Please allow up to 5 business days depending on your bank's processing schedule.", 2),
 
-    // Trust
     mkText(sTrust.id, 'Your funds are held in fully segregated client accounts, protected by industry-standard 256-bit encryption and monitored 24/7. Your assets are safe with us.', 3),
     mkText(sTrust.id, 'We are fully licensed and regulated, complying with all applicable financial regulations. Every transaction on your account is logged, audited, and secured.', 2),
     mkText(sTrust.id, 'Your account is protected by two-factor authentication and real-time fraud monitoring. If you ever notice any suspicious activity, please contact us immediately and we will act without delay.', 2),
 
-    // When Will You Take Your Money
     mkText(sWhenWillYou.id, 'Based on your current balance and recent trading activity, your funds are available for withdrawal right now. Would you like me to initiate the process on your behalf?', 3),
     mkText(sWhenWillYou.id, 'Your withdrawal is scheduled for processing on [DATE]. Please ensure your bank details are up to date in your account settings to avoid any delays.', 1),
     mkText(sWhenWillYou.id, 'I can see your account balance is ready. To proceed with a withdrawal, please log into your account, navigate to "Withdraw Funds", and follow the on-screen steps. It typically takes 1–3 business days.', 1),
 
-    // Give Me a Loan
     mkText(sGiveLoan.id, 'Thank you for your interest in our financing options! Based on your account history and activity, you may qualify for a credit line of up to $[AMOUNT]. Shall I begin the pre-qualification process?', 2),
     mkText(sGiveLoan.id, "To begin the loan application, please make sure your account is fully verified and your identity documents are on file. The review typically takes 1–2 business days and you'll be notified by email.", 1),
     mkText(sGiveLoan.id, 'Our credit team will review your application and reach out with a personalized offer. In the meantime, feel free to reach out if you have any questions about our loan terms or repayment options.', 0),
 
-    // Tax
     mkText(sTax.id, 'Your tax documents for the current fiscal year are available in your account portal under Documents & Statements. You can download them at any time in PDF or CSV format.', 1),
     mkText(sTax.id, 'For tax-related questions, we recommend consulting a licensed tax professional. We can generate a full transaction history report for any date range upon request — just let me know.', 1),
     mkText(sTax.id, 'Your annual statement for [YEAR] has been generated and is available for download in your account dashboard. It includes all transactions, fees, and earnings for the full calendar year.', 0),
 
-    // No Money
     mkText(sNoMoney.id, 'I can see your account balance is currently at zero. Would you like to make a deposit to get started? Our team can walk you through the process step by step.', 1),
     mkText(sNoMoney.id, 'It looks like your available balance is insufficient for this transaction. Please add funds to your account to continue — I can help guide you through the deposit process if needed.', 0),
     mkText(sNoMoney.id, 'To activate your trading account and start investing, a minimum initial deposit of $[AMOUNT] is required. Would you like assistance with making your first deposit today?', 0),
@@ -122,16 +123,12 @@ function seedDemo() {
 // ─── Clipboard ────────────────────────────────────────────────────────────────
 
 async function copyToClipboard(text) {
-  // Preferred: Clipboard API (requires https or localhost)
   if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
     try {
       await navigator.clipboard.writeText(text);
       return true;
-    } catch {
-      // fall through to execCommand fallback
-    }
+    } catch { /* fall through */ }
   }
-  // Fallback: works on file:// protocol
   const el = document.createElement('textarea');
   el.value = text;
   el.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
@@ -165,14 +162,17 @@ const icon = {
 
   noResults: () => `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`,
 
-  // Pushpin — outline (unpinned hover state)
   pin: () => `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76z"/></svg>`,
 
-  // Pushpin — filled (pinned state)
   pinFilled: () => `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22" stroke-width="2.2" fill="none"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76z"/></svg>`,
 
-  // Globe — translate
   translate: () => `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`,
+
+  duplicate: () => `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M4 16H3a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v1"/></svg>`,
+
+  download: () => `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
+
+  upload: () => `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>`,
 };
 
 // ─── HTML Helpers ─────────────────────────────────────────────────────────────
@@ -188,7 +188,6 @@ function escHtml(str) {
 // ─── Derived Queries ──────────────────────────────────────────────────────────
 
 function sortedSections() {
-  // Returns flat array: pinned first (stable by pin time), then unpinned (by open count)
   const pinned = state.sections
     .filter(s => s.pinned)
     .sort((a, b) => (a.pinnedAt || 0) - (b.pinnedAt || 0));
@@ -202,6 +201,155 @@ function textsForSection(sectionId) {
   return state.texts.filter(t => t.sectionId === sectionId);
 }
 
+// ─── FLIP Animation Helpers ───────────────────────────────────────────────────
+//
+// FLIP = First, Last, Invert, Play.
+// We record element positions BEFORE reorder, move DOM nodes to their new
+// positions, then animate each element from where it WAS to where it IS.
+// This produces smooth physical motion without any full re-render.
+
+function _flipPlay(elements, firstTops, easing = 'cubic-bezier(0.25, 0.46, 0.45, 0.94)', duration = '0.36s') {
+  // Record LAST positions (after DOM reorder, no transforms applied yet)
+  const lastTops = new Map();
+  elements.forEach(el => {
+    lastTops.set(el.dataset.id, el.getBoundingClientRect().top);
+  });
+
+  // INVERT — teleport each element back to where it was visually
+  elements.forEach(el => {
+    const dy = (firstTops.get(el.dataset.id) ?? 0) - (lastTops.get(el.dataset.id) ?? 0);
+    el.style.transition = 'none';
+    el.style.transform  = dy !== 0 ? `translateY(${dy}px)` : '';
+  });
+
+  // Force reflow so the browser commits the inverted positions
+  // (reading a layout property on any element triggers this)
+  elements[0].getBoundingClientRect();
+
+  // PLAY — animate each element from its inverted position to its final position
+  elements.forEach(el => {
+    const dy = (firstTops.get(el.dataset.id) ?? 0) - (lastTops.get(el.dataset.id) ?? 0);
+    if (dy === 0) return; // element didn't move, skip
+
+    el.style.transition = `transform ${duration} ${easing}`;
+    el.style.transform  = 'translateY(0)';
+
+    el.addEventListener('transitionend', function handler(e) {
+      // Only clean up on the transform transition, not on background / border-color etc.
+      if (e.propertyName !== 'transform') return;
+      el.style.transition = '';
+      el.style.transform  = '';
+      el.removeEventListener('transitionend', handler);
+    });
+  });
+}
+
+// ─── FLIP: re-sort reply cards after a copy ───────────────────────────────────
+
+function reorderCardsAnimated() {
+  // Only re-sort in section view, never in search mode
+  if (state.searchQuery || !state.selectedId) return;
+
+  const container = document.getElementById('textsContainer');
+  if (!container) return;
+
+  const allCards = Array.from(container.querySelectorAll('.reply-card'));
+  if (allCards.length <= 1) return;
+
+  // Target order: sorted by usageCount descending (stable)
+  const items  = textsForSection(state.selectedId).slice().sort((a, b) => b.usageCount - a.usageCount);
+  const newIds = items.map(t => t.id);
+  const curIds = allCards.map(c => c.dataset.id);
+
+  if (curIds.join(',') === newIds.join(',')) return; // order unchanged, nothing to do
+
+  // FIRST — clear any in-progress FLIP transforms, then record current positions
+  allCards.forEach(el => {
+    el.style.transition = 'none';
+    el.style.transform  = '';
+  });
+  container.getBoundingClientRect(); // flush
+
+  const firstTops = new Map();
+  allCards.forEach(el => {
+    firstTops.set(el.dataset.id, el.getBoundingClientRect().top);
+  });
+
+  // Reorder DOM nodes (no create/destroy — just moves)
+  const sorted = newIds.map(id => container.querySelector(`.reply-card[data-id="${id}"]`)).filter(Boolean);
+  sorted.forEach(el => container.removeChild(el));
+  sorted.forEach(el => container.appendChild(el));
+
+  // LAST + INVERT + PLAY
+  _flipPlay(sorted, firstTops, 'cubic-bezier(0.16, 1, 0.3, 1)', '0.46s');
+}
+
+// ─── FLIP: re-sort sidebar section items after an open-count change ───────────
+
+function reorderSidebarAnimated() {
+  const list = document.getElementById('sectionList');
+  if (!list) return;
+
+  // Only the unpinned section items need to re-sort
+  const unpinnedEls = Array.from(list.querySelectorAll('.section-item')).filter(el => {
+    const s = state.sections.find(x => x.id === el.dataset.id);
+    return s && !s.pinned;
+  });
+
+  if (unpinnedEls.length <= 1) return;
+
+  // Target order for unpinned sections
+  const unpinned = state.sections.filter(s => !s.pinned).sort((a, b) => b.openCount - a.openCount);
+  const newIds   = unpinned.map(s => s.id);
+  const curIds   = unpinnedEls.map(el => el.dataset.id);
+
+  if (curIds.join(',') === newIds.join(',')) return; // already in correct order
+
+  // FIRST — clear stale transforms, record positions
+  unpinnedEls.forEach(el => {
+    el.style.transition = 'none';
+    el.style.transform  = '';
+  });
+  list.getBoundingClientRect();
+
+  const firstTops = new Map();
+  unpinnedEls.forEach(el => {
+    firstTops.set(el.dataset.id, el.getBoundingClientRect().top);
+  });
+
+  // Reorder DOM nodes (keep labels + dividers exactly where they are)
+  const sorted = newIds.map(id => list.querySelector(`.section-item[data-id="${id}"]`)).filter(Boolean);
+  sorted.forEach(el => list.removeChild(el));
+
+  // Re-insert after the divider (if it exists) or at the end of the list
+  const divider = list.querySelector('.section-divider');
+  if (divider) {
+    let anchor = divider;
+    sorted.forEach(el => {
+      anchor.parentNode.insertBefore(el, anchor.nextSibling);
+      anchor = el;
+    });
+  } else {
+    sorted.forEach(el => list.appendChild(el));
+  }
+
+  // LAST + INVERT + PLAY (slightly snappier than card animation — sidebar is compact)
+  _flipPlay(sorted, firstTops, 'cubic-bezier(0.16, 1, 0.3, 1)', '0.36s');
+}
+
+// ─── Sidebar: update only the active-state CSS without a full re-render ───────
+
+function _setSidebarActiveState(prevId, newId) {
+  if (prevId) {
+    const prev = document.querySelector(`.section-item[data-id="${prevId}"]`);
+    if (prev) prev.classList.remove('active');
+  }
+  if (newId) {
+    const next = document.querySelector(`.section-item[data-id="${newId}"]`);
+    if (next) next.classList.add('active');
+  }
+}
+
 // ─── Render: Sidebar ─────────────────────────────────────────────────────────
 
 function renderSidebar() {
@@ -210,19 +358,16 @@ function renderSidebar() {
 
   list.innerHTML = '';
 
-  // Search visibility check
   const isVisible = s => {
     if (!q) return true;
     if (s.name.toLowerCase().includes(q)) return true;
     return state.texts.some(t => t.sectionId === s.id && t.content.toLowerCase().includes(q));
   };
 
-  // Pinned: stable order by pin timestamp (earliest pin = top)
   const pinned = state.sections
     .filter(s => s.pinned && isVisible(s))
     .sort((a, b) => (a.pinnedAt || 0) - (b.pinnedAt || 0));
 
-  // Unpinned: sorted by open/select frequency, descending
   const unpinned = state.sections
     .filter(s => !s.pinned && isVisible(s))
     .sort((a, b) => b.openCount - a.openCount);
@@ -252,10 +397,10 @@ function appendGroupLabel(container, text) {
 }
 
 function appendSectionItem(container, section) {
-  const isActive  = section.id === state.selectedId;
-  const count     = textsForSection(section.id).length;
-  const pinClass  = `icon-btn pin-btn${section.pinned ? ' is-pinned' : ''}`;
-  const pinTitle  = section.pinned ? 'Открепить' : 'Закрепить';
+  const isActive    = section.id === state.selectedId;
+  const count       = textsForSection(section.id).length;
+  const pinClass    = `icon-btn pin-btn${section.pinned ? ' is-pinned' : ''}`;
+  const pinTitle    = section.pinned ? 'Открепить' : 'Закрепить';
   const pinIconHtml = section.pinned ? icon.pinFilled() : icon.pin();
 
   const item = document.createElement('div');
@@ -275,8 +420,8 @@ function appendSectionItem(container, section) {
   `;
 
   item.querySelector('.section-item-main').addEventListener('click', () => selectSection(section.id));
-  item.querySelector('.pin-btn').addEventListener('click', e => { e.stopPropagation(); togglePin(section.id); });
-  item.querySelector('.edit-btn').addEventListener('click', e => { e.stopPropagation(); promptRenameSection(section.id); });
+  item.querySelector('.pin-btn').addEventListener('click',    e => { e.stopPropagation(); togglePin(section.id); });
+  item.querySelector('.edit-btn').addEventListener('click',   e => { e.stopPropagation(); promptRenameSection(section.id); });
   item.querySelector('.delete-btn').addEventListener('click', e => { e.stopPropagation(); promptDeleteSection(section.id); });
 
   container.appendChild(item);
@@ -287,7 +432,6 @@ function appendSectionItem(container, section) {
 function renderContent() {
   const header     = document.getElementById('contentHeader');
   const container  = document.getElementById('textsContainer');
-  const emptyState = document.getElementById('emptyState');
   const titleEl    = document.getElementById('sectionTitle');
   const addTextBtn = document.getElementById('btnAddText');
   const q          = state.searchQuery.toLowerCase();
@@ -295,15 +439,12 @@ function renderContent() {
 
   container.innerHTML = '';
 
-  // ── Nothing selected and no search: show landing empty state
   if (!state.selectedId && !isSearch) {
     header.classList.add('hidden');
-    container.innerHTML = '';
     showEmptyState(icon.chat(), 'Select a Section', 'Choose a section from the sidebar to view your quick replies.');
     return;
   }
 
-  // ── Header
   header.classList.remove('hidden');
 
   if (isSearch) {
@@ -315,21 +456,18 @@ function renderContent() {
     addTextBtn.classList.remove('hidden');
   }
 
-  // ── Texts to display
   let items;
-
   if (isSearch) {
     items = state.texts.filter(t => {
       const s = state.sections.find(x => x.id === t.sectionId);
       return t.content.toLowerCase().includes(q) || (s && s.name.toLowerCase().includes(q));
     });
   } else {
-    // Sort by copy frequency — most copied replies rise to top
     items = textsForSection(state.selectedId)
+      .slice()
       .sort((a, b) => b.usageCount - a.usageCount);
   }
 
-  // ── Empty sub-state
   if (items.length === 0) {
     hideEmptyState();
     if (isSearch) {
@@ -347,17 +485,16 @@ function renderContent() {
     const card = document.createElement('div');
     card.className = 'reply-card';
     card.dataset.id = text.id;
-    card.style.animationDelay = `${index * 0.038}s`;
+    card.style.animationDelay = `${index * 0.025}s`;
 
     const labelHtml = (isSearch && section)
       ? `<div class="card-section-label">${escHtml(section.name)}</div>`
       : '';
 
-    // Determine what text to display (original or translation)
-    const visibleText     = text.isShowingTranslated && text.translatedText ? text.translatedText : text.content;
-    const translateLabel  = text.isShowingTranslated ? 'Original' : 'Translate';
-    const isStale         = text.translationStale && !!text.translatedText;
-    const translateClass  = [
+    const visibleText    = text.isShowingTranslated && text.translatedText ? text.translatedText : text.content;
+    const translateLabel = text.isShowingTranslated ? 'Original' : 'Translate';
+    const isStale        = text.translationStale && !!text.translatedText;
+    const translateClass = [
       'translate-btn',
       text.isShowingTranslated ? 'is-translated' : '',
       isStale ? 'is-stale' : '',
@@ -372,6 +509,9 @@ function renderContent() {
         <div class="card-actions">
           <button class="card-action-btn edit-text-btn" data-id="${text.id}">
             ${icon.edit()} Edit
+          </button>
+          <button class="card-action-btn duplicate-text-btn" data-id="${text.id}">
+            ${icon.duplicate()} Duplicate
           </button>
           <button class="card-action-btn delete-text-btn" data-id="${text.id}">
             ${icon.trash()} Delete
@@ -390,10 +530,11 @@ function renderContent() {
       </div>
     `;
 
-    card.querySelector('.translate-btn').addEventListener('click', () => handleTranslate(text.id));
-    card.querySelector('.copy-btn').addEventListener('click', () => handleCopy(text.id));
-    card.querySelector('.edit-text-btn').addEventListener('click', e => { e.stopPropagation(); promptEditText(text.id); });
-    card.querySelector('.delete-text-btn').addEventListener('click', e => { e.stopPropagation(); promptDeleteText(text.id); });
+    card.querySelector('.translate-btn').addEventListener('click',       () => handleTranslate(text.id));
+    card.querySelector('.copy-btn').addEventListener('click',            () => handleCopy(text.id));
+    card.querySelector('.edit-text-btn').addEventListener('click',       e => { e.stopPropagation(); promptEditText(text.id); });
+    card.querySelector('.duplicate-text-btn').addEventListener('click',  e => { e.stopPropagation(); duplicateText(text.id); });
+    card.querySelector('.delete-text-btn').addEventListener('click',     e => { e.stopPropagation(); promptDeleteText(text.id); });
 
     container.appendChild(card);
   });
@@ -401,7 +542,7 @@ function renderContent() {
 
 function showEmptyState(iconHtml, title, sub) {
   const el = document.getElementById('emptyState');
-  document.getElementById('emptyIcon').innerHTML  = iconHtml;
+  document.getElementById('emptyIcon').innerHTML    = iconHtml;
   document.getElementById('emptyTitle').textContent = title;
   document.getElementById('emptySub').textContent   = sub;
   el.classList.remove('hidden');
@@ -421,15 +562,31 @@ function render() {
 // ─── Section Actions ──────────────────────────────────────────────────────────
 
 function selectSection(id) {
+  const prevId    = state.selectedId;
+  const hadSearch = state.searchQuery.length > 0;
+
   state.selectedId  = id;
   state.searchQuery = '';
+
   const searchEl = document.getElementById('searchInput');
   if (searchEl) searchEl.value = '';
   document.getElementById('searchClear').classList.add('hidden');
-  // Track open frequency — drives unpinned sidebar order
+
   const s = state.sections.find(x => x.id === id);
   if (s) { s.openCount = (s.openCount || 0) + 1; save(); }
-  render();
+
+  if (hadSearch) {
+    // Coming out of search — sidebar needs a full rebuild to show all sections
+    render();
+  } else {
+    // Normal section switch:
+    // 1. Update active highlight in sidebar without destroying any DOM node
+    _setSidebarActiveState(prevId, id);
+    // 2. FLIP-animate any sidebar items that need to reorder
+    reorderSidebarAnimated();
+    // 3. Re-render only the content panel
+    renderContent();
+  }
 }
 
 function addSection(name) {
@@ -438,7 +595,7 @@ function addSection(name) {
   const s = { id: uid(), name: trimmed, usageCount: 0, openCount: 0, pinned: false, pinnedAt: null };
   state.sections.push(s);
   save();
-  state.selectedId = s.id;
+  state.selectedId  = s.id;
   state.searchQuery = '';
   render();
 }
@@ -464,7 +621,7 @@ function togglePin(id) {
   s.pinned   = !s.pinned;
   s.pinnedAt = s.pinned ? Date.now() : null;
   save();
-  render();
+  render(); // structural change (label / divider may appear/disappear) — full re-render needed
 }
 
 // ─── Text Actions ─────────────────────────────────────────────────────────────
@@ -485,7 +642,6 @@ function editText(id, content) {
   if (!trimmed) return;
   const t = state.texts.find(x => x.id === id);
   if (t) {
-    // If content changed and a translation was saved, mark it stale
     if (t.content !== trimmed && t.translatedText) {
       t.translationStale    = true;
       t.isShowingTranslated = false;
@@ -502,22 +658,38 @@ function deleteText(id) {
   render();
 }
 
+function duplicateText(id) {
+  const t = state.texts.find(x => x.id === id);
+  if (!t) return;
+  const idx = state.texts.indexOf(t);
+  state.texts.splice(idx + 1, 0, {
+    id:                  uid(),
+    sectionId:           t.sectionId,
+    content:             t.content,
+    usageCount:          0,
+    translatedText:      t.translatedText ?? null,
+    isShowingTranslated: false,
+    translationStale:    false,
+  });
+  save();
+  render();
+}
+
 // ─── Copy Handler ─────────────────────────────────────────────────────────────
 
 async function handleCopy(id) {
   const t = state.texts.find(x => x.id === id);
   if (!t) return;
 
-  // Copy the currently visible text (original or translation)
   const textToCopy = t.isShowingTranslated && t.translatedText ? t.translatedText : t.content;
   const ok = await copyToClipboard(textToCopy);
   if (!ok) { console.warn('Quick Replies: clipboard write failed.'); return; }
 
-  // Increment only this reply's copy count (section order is driven by open count, not copies)
+  // ── Update counter immediately ────────────────────────────────────────────
   t.usageCount++;
   save();
 
-  // Animate the card
+  // ── Visual feedback on the card and button ────────────────────────────────
   const card = document.querySelector(`.reply-card[data-id="${id}"]`);
   const btn  = document.querySelector(`.copy-btn[data-id="${id}"]`);
 
@@ -528,17 +700,20 @@ async function handleCopy(id) {
 
   if (btn) {
     btn.classList.add('copied');
-    btn.querySelector('.copy-icon').innerHTML  = icon.check();
+    btn.querySelector('.copy-icon').innerHTML    = icon.check();
     btn.querySelector('.copy-label').textContent = 'Copied';
     setTimeout(() => {
       btn.classList.remove('copied');
-      btn.querySelector('.copy-icon').innerHTML  = icon.copy();
+      btn.querySelector('.copy-icon').innerHTML    = icon.copy();
       btn.querySelector('.copy-label').textContent = 'Copy';
     }, 1600);
   }
 
-  // Toast
   showToast('Copied to clipboard');
+
+  // ── FLIP-animate the card to its new sorted position ─────────────────────
+  // Runs immediately — the shimmer plays on the card as it moves, which looks premium.
+  reorderCardsAnimated();
 }
 
 // ─── Translate Handler ────────────────────────────────────────────────────────
@@ -547,7 +722,6 @@ async function handleTranslate(id) {
   const t = state.texts.find(x => x.id === id);
   if (!t) return;
 
-  // Currently showing translation → toggle back to original (no API call)
   if (t.isShowingTranslated) {
     t.isShowingTranslated = false;
     save();
@@ -555,7 +729,6 @@ async function handleTranslate(id) {
     return;
   }
 
-  // Has a fresh (non-stale) translation → just show it (no API call)
   if (t.translatedText && !t.translationStale) {
     t.isShowingTranslated = true;
     save();
@@ -563,7 +736,6 @@ async function handleTranslate(id) {
     return;
   }
 
-  // Need a new translation — call the backend
   const btn = document.querySelector(`.translate-btn[data-id="${id}"]`);
   if (btn) {
     btn.disabled = true;
@@ -584,11 +756,15 @@ async function handleTranslate(id) {
     }
 
     const data = await res.json();
-    t.translatedText      = data.translatedText;
+    if (!data.translatedText || typeof data.translatedText !== 'string' || !data.translatedText.trim()) {
+      throw new Error('Empty or missing translation in response');
+    }
+    t.translatedText      = data.translatedText.trim();
     t.isShowingTranslated = true;
     t.translationStale    = false;
     save();
     _applyTranslateState(id, t);
+    showToast('Translation complete');
   } catch (err) {
     console.error('Translation failed:', err.message);
     showToast('Translation failed');
@@ -600,34 +776,79 @@ async function handleTranslate(id) {
   }
 }
 
-// Update the card DOM in-place — avoids a full re-render so animations stay intact
 function _applyTranslateState(id, t) {
-  const card  = document.querySelector(`.reply-card[data-id="${id}"]`);
+  const card = document.querySelector(`.reply-card[data-id="${id}"]`);
   if (!card) return;
 
   const textEl = card.querySelector('.card-text');
   const btn    = card.querySelector('.translate-btn');
 
   if (textEl) {
-    const visible = t.isShowingTranslated && t.translatedText ? t.translatedText : t.content;
-    textEl.textContent = visible;
+    textEl.textContent = t.isShowingTranslated && t.translatedText ? t.translatedText : t.content;
   }
 
   if (btn) {
     btn.disabled = false;
     btn.classList.remove('translating');
-
     if (t.isShowingTranslated) {
       btn.classList.add('is-translated');
       btn.classList.remove('is-stale');
       btn.querySelector('.translate-label').textContent = 'Original';
     } else {
       btn.classList.remove('is-translated');
-      const isStale = t.translationStale && !!t.translatedText;
-      btn.classList.toggle('is-stale', isStale);
+      btn.classList.toggle('is-stale', t.translationStale && !!t.translatedText);
       btn.querySelector('.translate-label').textContent = 'Translate';
     }
   }
+}
+
+// ─── Backup: Export ───────────────────────────────────────────────────────────
+
+function exportBackup() {
+  const payload = {
+    version:    1,
+    exportedAt: new Date().toISOString(),
+    sections:   state.sections,
+    texts:      state.texts,
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `quick-replies-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Backup exported');
+}
+
+// ─── Backup: Import ───────────────────────────────────────────────────────────
+
+function importBackup(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!Array.isArray(data.sections) || !Array.isArray(data.texts)) {
+        throw new Error('Invalid backup structure');
+      }
+      state.sections    = data.sections.map(migrateSection);
+      state.texts       = data.texts.map(migrateText);
+      state.selectedId  = null;
+      state.searchQuery = '';
+      save();
+      if (state.sections.length > 0) {
+        state.selectedId = sortedSections()[0].id;
+      }
+      render();
+      showToast('Backup imported');
+    } catch (err) {
+      alert('Import failed: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
 }
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
@@ -638,8 +859,8 @@ function showToast(msg) {
   const toast  = document.getElementById('toast');
   const msgEl  = document.getElementById('toastMsg');
   const iconEl = document.getElementById('toastIcon');
-  msgEl.textContent    = msg;
-  iconEl.innerHTML     = icon.check();
+  msgEl.textContent = msg;
+  iconEl.innerHTML  = icon.check();
   toast.classList.add('visible');
   clearTimeout(_toastTimer);
   _toastTimer = setTimeout(() => toast.classList.remove('visible'), 2000);
@@ -667,8 +888,7 @@ function showModal({ title, placeholder, defaultValue = '', multiline = false, h
     `;
   }
 
-  const overlay = document.getElementById('modalOverlay');
-  overlay.classList.add('visible');
+  document.getElementById('modalOverlay').classList.add('visible');
 
   const input = document.getElementById('modalInput');
   requestAnimationFrame(() => {
@@ -686,7 +906,6 @@ function onModalInputKey(e) {
     e.preventDefault();
     submitModal();
   } else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-    // Cmd+Enter saves from textarea too
     e.preventDefault();
     submitModal();
   }
@@ -709,8 +928,7 @@ function submitModal() {
 
 function promptAddSection() {
   showModal({
-    title: 'New Section',
-    placeholder: 'Section name (e.g. Refunds, Onboarding…)',
+    title: 'New Section', placeholder: 'Section name (e.g. Refunds, Onboarding…)',
     onSave: name => addSection(name)
   });
 }
@@ -719,9 +937,7 @@ function promptRenameSection(id) {
   const s = state.sections.find(x => x.id === id);
   if (!s) return;
   showModal({
-    title: 'Rename Section',
-    placeholder: 'Section name',
-    defaultValue: s.name,
+    title: 'Rename Section', placeholder: 'Section name', defaultValue: s.name,
     onSave: name => renameSection(id, name)
   });
 }
@@ -739,10 +955,8 @@ function promptDeleteSection(id) {
 function promptAddText() {
   if (!state.selectedId) return;
   showModal({
-    title: 'New Quick Reply',
-    placeholder: 'Type your reply text here…',
-    multiline: true,
-    hint: 'Tip: press Cmd+Enter to save quickly.',
+    title: 'New Quick Reply', placeholder: 'Type your reply text here…',
+    multiline: true, hint: 'Tip: press Cmd+Enter to save quickly.',
     onSave: content => addText(state.selectedId, content)
   });
 }
@@ -751,31 +965,21 @@ function promptEditText(id) {
   const t = state.texts.find(x => x.id === id);
   if (!t) return;
   showModal({
-    title: 'Edit Quick Reply',
-    placeholder: 'Reply text',
-    defaultValue: t.content,
-    multiline: true,
-    hint: 'Tip: press Cmd+Enter to save quickly.',
+    title: 'Edit Quick Reply', placeholder: 'Reply text', defaultValue: t.content,
+    multiline: true, hint: 'Tip: press Cmd+Enter to save quickly.',
     onSave: content => editText(id, content)
   });
 }
 
 function promptDeleteText(id) {
-  if (window.confirm('Delete this quick reply? This cannot be undone.')) {
-    deleteText(id);
-  }
+  if (window.confirm('Delete this quick reply? This cannot be undone.')) deleteText(id);
 }
 
 // ─── Search ───────────────────────────────────────────────────────────────────
 
 function onSearch(e) {
   state.searchQuery = e.target.value;
-  const clearBtn = document.getElementById('searchClear');
-  if (state.searchQuery) {
-    clearBtn.classList.remove('hidden');
-  } else {
-    clearBtn.classList.add('hidden');
-  }
+  document.getElementById('searchClear').classList.toggle('hidden', !state.searchQuery);
   render();
 }
 
@@ -790,26 +994,25 @@ function clearSearch() {
 // ─── Event Setup ──────────────────────────────────────────────────────────────
 
 function setupEvents() {
-  // Sidebar
   document.getElementById('btnAddSection').addEventListener('click', promptAddSection);
-
-  // Content header
   document.getElementById('btnAddText').addEventListener('click', promptAddText);
   document.getElementById('searchInput').addEventListener('input', onSearch);
   document.getElementById('searchClear').addEventListener('click', clearSearch);
 
-  // Modal buttons
   document.getElementById('modalSave').addEventListener('click', submitModal);
   document.getElementById('modalCancel').addEventListener('click', closeModal);
-
-  // Close modal on backdrop click
   document.getElementById('modalOverlay').addEventListener('click', e => {
     if (e.target === document.getElementById('modalOverlay')) closeModal();
   });
 
-  // Global keyboard shortcuts
+  document.getElementById('btnExport').addEventListener('click', exportBackup);
+  document.getElementById('importFileInput').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (file) importBackup(file);
+    e.target.value = '';
+  });
+
   document.addEventListener('keydown', e => {
-    // Escape closes modal if open
     if (e.key === 'Escape' && document.getElementById('modalOverlay').classList.contains('visible')) {
       closeModal();
     }
@@ -822,6 +1025,8 @@ function injectStaticIcons() {
   document.getElementById('iconAddSection').innerHTML = icon.plus();
   document.getElementById('iconAddText').innerHTML    = icon.plus();
   document.getElementById('searchIconEl').innerHTML   = icon.search();
+  document.getElementById('iconExport').innerHTML     = icon.download();
+  document.getElementById('iconImport').innerHTML     = icon.upload();
 }
 
 // ─── Bootstrap ────────────────────────────────────────────────────────────────
@@ -831,7 +1036,6 @@ function init() {
   load();
   setupEvents();
 
-  // Auto-select the most-used section on first load
   if (!state.selectedId && state.sections.length > 0) {
     state.selectedId = sortedSections()[0].id;
   }
